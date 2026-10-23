@@ -42,27 +42,85 @@ CLAUDE_MANAGED_ENVIRONMENT_ID=your_environment_id
 PORT=3011
 ```
 
-## How the application was developed
+## How the app was build
 
-The browser collects inputs; the Node host validates requests; the lesson implementation produces observable evidence. The architecture page walks through the real source with numbered steps, prerequisite configuration, source filenames and code excerpts.
+### 1. Validate spending and observation limits
 
-### Lesson implementation
+Reject a nonpositive deadline or a budget that is not a positive safe integer before constructing a session configuration. Budget units are cents.
 
-[src/lesson.ts](https://github.com/luiscoco/Udemy-claude-managed-agents-lesson-c11-app/blob/main/src/lesson.ts)
+Source: [src/lesson.ts](src/lesson.ts#L13) · selected statements
 
 ```typescript
-  async run(input) {
+const budget = number(input, "budgetCents"),
+  deadline = number(input, "deadlineMs");
 
-const budget=number(input,"budgetCents"), deadline=number(input,"deadlineMs");
-if(!Number.isSafeInteger(budget)||budget<1||deadline<1) return report("rejected","Budget and deadline must be positive",{},["Validate configuration before session creation"]);
-const tools=flag(input,"clearTools")?[]:["read","glob"];
-return report("passed","Resolved the selected session configuration",{toolCount:tools.length,effective:{model:"base-model",system:null,tools,mcp_servers:[],skills:[]},budgetCents:budget,localDeadlineMs:deadline,remoteStopOnDeadline:"not established"},["Inherit omitted model","Clear system with null","Replace the entire tools list","Keep local timeout separate from remote interruption"]);
-
-  }
-};
+if (!Number.isSafeInteger(budget) || budget < 1 || deadline < 1)
+  return report("rejected", "Budget and deadline must be positive", {}, [
+    "Validate configuration before session creation",
+  ]);
 ```
 
-Read the architecture page for the remaining source excerpts and explanations, including input handling and optional provider behavior. The diagram describes this application, rather than implying that an external integration has been implemented.
+### 2. Replace a capability list as one field
+
+clearTools selects an empty list; otherwise the local example selects read and glob. The list is replaced as a whole rather than merged with another list.
+
+Source: [src/lesson.ts](src/lesson.ts#L15)
+
+```typescript
+const tools = flag(input, "clearTools") ? [] : ["read", "glob"];
+```
+
+### 3. Distinguish resolved options from remote cancellation
+
+The evidence keeps inherited model, null system, complete capability lists, budget and local deadline visible. remoteStopOnDeadline remains not established because a local timeout is not an observed remote stop.
+
+Source: [src/lesson.ts](src/lesson.ts#L16)
+
+```typescript
+return report(
+  "passed",
+  "Resolved the selected session configuration",
+  {
+    toolCount: tools.length,
+    effective: {
+      model: "base-model",
+      system: null,
+      tools,
+      mcp_servers: [],
+      skills: [],
+    },
+    budgetCents: budget,
+    localDeadlineMs: deadline,
+    remoteStopOnDeadline: "not established",
+  },
+  [
+    "Inherit omitted model",
+    "Clear system with null",
+    "Replace the entire tools list",
+    "Keep local timeout separate from remote interruption",
+  ],
+);
+```
+
+### Check your understanding
+
+Run **Resolve a text-only override** in the application. Compare the result with these scenario expectations:
+
+```json
+{
+  "input": {
+    "budgetCents": 50,
+    "deadlineMs": 3000,
+    "clearTools": true
+  },
+  "expectedOutcome": "passed",
+  "checkEvidence": {
+    "toolCount": 0
+  }
+}
+```
+
+Then try **Reject an invalid budget**. Its expected outcome is `rejected`; identify the condition or evidence field that explains the difference.
 
 ## Validation
 
