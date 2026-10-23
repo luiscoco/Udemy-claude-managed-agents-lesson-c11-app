@@ -1,0 +1,29 @@
+{
+  "source": "live-provider-commentary",
+  "sessionId": "sesn_01Ui3R8jgqrDLmZeqqE7whNp",
+  "answer": "This experiment demonstrates how session configuration is resolved: omitted fields inherit defaults, explicit nulls clear values (like the system prompt), and provided lists replace prior ones entirely. It also illustrates that a local deadline (3000 ms) is a client-side timeout distinct from any remote stop-on-deadline behavior, which was not established here. The experiment ran with zero tools, a 50-cent budget cap, and is strictly local data \u2014 not evidence of any live integration.",
+  "stopReason": "end_turn",
+  "eventTypes": [
+    "session.status_running",
+    "session.thread_status_running",
+    "user.message",
+    "span.model_request_start",
+    "agent.thinking",
+    "agent.message",
+    "span.model_request_end",
+    "session.thread_status_idle",
+    "session.usage",
+    "session.status_idle"
+  ],
+  "requestUsage": [
+    {
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "input_tokens": 628,
+      "output_tokens": 133,
+      "speed": "standard"
+    }
+  ],
+  "experimentHash": "052c4a19934a2cce178843ee9f4f204c8f72bfe8f3bc36e01a70e4ac18f7df9a",
+  "scope": "A real text-only model response about the local experiment. External integrations and the experiment's correctness are not certified by this response."
+}

@@ -1,0 +1,53 @@
+// Lesson C11: examples are inert until their exported functions are called.
+import Anthropic from "@anthropic-ai/sdk";
+
+export function createHostClient() {
+  return new Anthropic({ maxRetries: 0 });
+}
+
+export async function createConfiguredSession(
+  client: Anthropic, baseAgentId: string, pinnedVersion: number,
+  environmentId: string, modelId: string
+) {
+const session = await client.beta.sessions.create({
+  agent: {
+    type: "agent_with_overrides",
+    id: baseAgentId, version: pinnedVersion,
+    model: modelId,
+    system: null,
+    tools: [], mcp_servers: [], skills: []
+  },
+  environment_id: environmentId,
+  budget: { type: "limit",
+    max_list_cost: { currency: "USD", amount: "50" } }
+}, { maxRetries: 0 });
+  const actual = session.agent;
+  if (actual.id !== baseAgentId || actual.version !== pinnedVersion)
+    throw new Error("Unexpected base identity");
+  if (actual.model.id !== modelId || actual.system !== null ||
+      actual.tools.length || actual.mcp_servers.length || actual.skills.length)
+    throw new Error("Unexpected effective configuration");
+  if (session.budget?.max_list_cost.amount !== "50" ||
+      session.budget.max_list_cost.currency !== "USD")
+    throw new Error("Unexpected session budget");
+  return session;
+}
+
+// Caller verifies ownership, an existing budget and approved cap > consumed cost.
+export async function replaceApprovedBudget(
+  client: Anthropic, sessionId: string, approvedCents: string
+) {
+  if (!/^[1-9][0-9]*$/.test(approvedCents))
+    throw new Error("Budget must be positive whole cents as a string");
+  return client.beta.sessions.update(sessionId, {
+    budget: { type: "limit", max_list_cost: {
+      currency: "USD", amount: approvedCents
+    } }
+  }, { maxRetries: 0 });
+}
+
+// Alternative policy decision, not an automatic second step after replacement.
+export async function removeApprovedBudget(client: Anthropic, sessionId: string) {
+  return client.beta.sessions.update(sessionId,
+    { budget: null }, { maxRetries: 0 });
+}
